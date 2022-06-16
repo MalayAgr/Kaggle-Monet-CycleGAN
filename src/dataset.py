@@ -41,7 +41,11 @@ def get_test_transforms(
 
 class MonetDataset(Dataset):
     def __init__(
-        self, monet_dir: str, photo_dir: str, transform: A.Compose = None
+        self,
+        monet_dir: str,
+        photo_dir: str,
+        transform: A.Compose = None,
+        output_keys: tuple[str, str] = ("monet_img", "image"),
     ) -> None:
         # Set the directory path for Monet images
         self.monet_dir = monet_dir
@@ -55,23 +59,25 @@ class MonetDataset(Dataset):
         self.img_paths = glob.glob(os.path.join(self.img_dir, "*.jpg"))
 
         # Get the number of Monet and normal images
-        self.n_monet = len(self.monet_paths)  # 300
-        self.n_img = len(self.img_paths)  # 7028
+        self.n_monet = len(self.monet_paths)
+        self.n_img = len(self.img_paths)
 
         # The length of the dataset is the maximum of the two
         self.data_len = max(self.n_monet, self.n_img)
+
+        self.output_keys = output_keys
 
     def __len__(self) -> int:
         return self.data_len
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-        # Modulus is required so that idx cycles back if idx > 299
+        monet_key, image_key = self.output_keys
+
+        # Modulus is required so that idx cycles back if idx > n_monet or n_imgs
         # Both are modulo just so that it can handle the case n_monet > n_imgs
-        # Potential issue: Imgs in idx 0 and 1 are most sampled as 7027 % 3 = 1
-        # Using a dictionary reduces code repetition
         imgs = {
-            "monet_img": self.monet_paths[idx % self.n_monet],
-            "image": self.img_paths[idx % self.n_img],
+            monet_key: self.monet_paths[idx % self.n_monet],
+            image_key: self.img_paths[idx % self.n_img],
         }
 
         # Load the images as NumPy arrays
