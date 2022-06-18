@@ -8,6 +8,9 @@ class Config:
 
     IMG_SIZE = 256
 
+    MEAN = (0.5, 0.5, 0.5)
+    STD = (0.5, 0.5, 0.5)
+
     # Used to ensure both Monet and normal images undergo the same transformation
     # See: https://albumentations.ai/docs/examples/example_multi_target/
     ADDITIONAL_TARGETS = {"monet_img": "image"}
@@ -33,3 +36,10 @@ class Config:
     @classmethod
     def filepath(cls, filename="photo"):
         return os.path.join(cls.DATA_DIR, filename)
+
+    @classmethod
+    def split_sizes(cls, length: int) -> tuple[int, int]:
+        n_val = int(length * cls.VAL_SPLIT)
+        n_train = length - n_val
+
+        return n_train, n_val
