@@ -1,3 +1,6 @@
+import itertools
+from collections.abc import Iterator
+
 import torch
 import torch.nn as nn
 
@@ -18,6 +21,24 @@ class CycleGAN(nn.Module):
         self.monet_disc = monet_disc
         self.img_gen = img_gen
         self.img_disc = img_disc
+
+    @property
+    def generators(self) -> dict[str, Generator]:
+        return {"monet": self.monet_gen, "img": self.img_gen}
+
+    @property
+    def discriminators(self) -> dict[str, Discriminator]:
+        return {"monet": self.monet_disc, "img": self.img_disc}
+
+    @property
+    def generator_params(self) -> Iterator[torch.Tensor]:
+        params = (gen.parameters() for gen in self.generators.values())
+        return itertools.chain(*params)
+
+    @property
+    def discriminator_params(self) -> Iterator[torch.Tensor]:
+        params = (disc.parameters() for disc in self.discriminators.values())
+        return itertools.chain(*params)
 
     def forward(
         self, img: torch.Tensor, monet_img: torch.Tensor
