@@ -1,10 +1,12 @@
 import os
+import random
 
+import numpy as np
 import torch
 
 
 class Config:
-    DATA_DIR = "../data"
+    DATA_DIR = "./data"
 
     IMG_SIZE = 256
 
@@ -37,9 +39,11 @@ class Config:
     def filepath(cls, filename="photo"):
         return os.path.join(cls.DATA_DIR, filename)
 
-    @classmethod
-    def split_sizes(cls, length: int) -> tuple[int, int]:
-        n_val = int(length * cls.VAL_SPLIT)
-        n_train = length - n_val
 
-        return n_train, n_val
+def seed_everything(seed: int = 42) -> None:
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    torch.backends.cudnn.benchmark = True
