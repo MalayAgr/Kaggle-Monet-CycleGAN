@@ -84,22 +84,8 @@ class MonetDataset(Dataset):
 
 
 def load_and_split_dataset(
-    monet_dir: str,
-    photo_dir: str,
-    img_size: int = 256,
-    norm_mean: tuple[int, ...] = (0.5, 0.5, 0.5),
-    norm_std: tuple[int, ...] = (0.5, 0.5, 0.5),
-    val_split: float = 0.1,
-    additional_targets: dict[str, str] = None,
+    monet_dir: str, photo_dir: str, transform: A.Compose = None, val_split: float = 0.1
 ) -> tuple[Subset, Subset]:
-    transform = get_transforms(
-        img_size=img_size,
-        mean=norm_mean,
-        std=norm_std,
-        training=True,
-        additional_targets=additional_targets,
-    )
-
     dataset = MonetDataset(
         monet_dir=monet_dir, photo_dir=photo_dir, transform=transform
     )
