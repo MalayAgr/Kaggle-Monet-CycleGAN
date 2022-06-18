@@ -3,8 +3,8 @@ from typing import Any, Callable
 
 import torch
 from torch.cuda import amp
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim import Adam, Optimizer
+from torch.optim.lr_scheduler import LambdaLR, _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -260,3 +260,24 @@ class Trainer:
                 disc_sch.step()
 
         return self.cycle_gan, history
+
+
+def get_optimizers(
+    cycle_gan: CycleGAN, lr: float = 2e-4
+) -> tuple[Optimizer, Optimizer]:
+    gen_opt = Adam(params=cycle_gan.generator_params, lr=lr, betas=(0.5, 0.999))
+    disc_opt = Adam(params=cycle_gan.discriminator_params, lr=lr, betas=(0.5, 0.999))
+
+    return gen_opt, disc_opt
+
+
+def get_schedulers(
+    gen_opt: Optimizer, disc_opt: Optimizer
+) -> tuple[_LRScheduler, _LRScheduler]:
+    lr_lambda = lambda epoch: 1 if epoch < 100 else 0.955 ^ (epoch % 100)
+
+    gen_sch = LambdaLR(gen_opt, lr_lambda=lr_lambda)
+
+    disc_sch = LambdaLR(disc_opt, lr_lambda=lr_lambda)
+
+    return gen_sch, disc_sch
