@@ -69,3 +69,39 @@ class CycleGAN(nn.Module):
             **img_output,
             **monet_output,
         }
+
+
+def get_halved_model(device: torch.device = None) -> CycleGAN:
+    monet_gen = Generator(
+        conv_out_channels=[32, 64, 128],
+        res_out_channels=128,
+        transpose_out_channels=[64, 32],
+        n_residuals=3,
+    )
+
+    monet_disc = Discriminator(out_channels=[32, 64, 128, 256])
+
+    img_gen = Generator(
+        conv_out_channels=[32, 64, 128],
+        res_out_channels=128,
+        transpose_out_channels=[64, 32],
+        n_residuals=3,
+    )
+
+    img_disc = Discriminator(out_channels=[32, 64, 128, 256])
+
+    cycle_gan = CycleGAN(
+        monet_gen=monet_gen,
+        monet_disc=monet_disc,
+        img_gen=img_gen,
+        img_disc=img_disc,
+    )
+
+    if device is not None:
+        monet_gen = monet_gen.to(device)
+        monet_disc = monet_disc.to(device)
+        img_gen = img_gen.to(device)
+        img_disc = img_disc.to(device)
+        cycle_gan = cycle_gan.to(device)
+
+    return cycle_gan
