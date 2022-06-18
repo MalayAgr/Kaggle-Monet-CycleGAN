@@ -8,23 +8,6 @@ from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
 
 
-def get_transforms(
-    img_size: int,
-    mean: tuple[float, ...] = (0.5, 0.5, 0.5),
-    std: tuple[float, ...] = (0.5, 0.5, 0.5),
-    training: bool = True,
-    additional_targets: dict[str, str] = None,
-) -> A.Compose:
-    transforms = [A.Resize(height=img_size, width=img_size)]
-
-    if training is True:
-        transforms.append(A.HorizontalFlip(p=0.5))
-
-    transforms.append(A.Normalize(mean=mean, std=std, max_pixel_value=255))
-
-    return A.Compose(transforms, additional_targets=additional_targets)
-
-
 class MonetDataset(Dataset):
     def __init__(
         self,
@@ -81,6 +64,23 @@ class MonetDataset(Dataset):
             imgs[k] = torch.tensor(img, dtype=torch.float32)
 
         return imgs
+
+
+def get_transforms(
+    img_size: int,
+    mean: tuple[float, ...] = (0.5, 0.5, 0.5),
+    std: tuple[float, ...] = (0.5, 0.5, 0.5),
+    training: bool = True,
+    additional_targets: dict[str, str] = None,
+) -> A.Compose:
+    transforms = [A.Resize(height=img_size, width=img_size)]
+
+    if training is True:
+        transforms.append(A.HorizontalFlip(p=0.5))
+
+    transforms.append(A.Normalize(mean=mean, std=std, max_pixel_value=255))
+
+    return A.Compose(transforms, additional_targets=additional_targets)
 
 
 def load_and_split_dataset(
