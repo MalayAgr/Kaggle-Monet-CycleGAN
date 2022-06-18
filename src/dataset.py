@@ -5,7 +5,7 @@ import albumentations as A
 import numpy as np
 import torch
 from PIL import Image
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset, random_split
 
 
 def get_transforms(
@@ -81,3 +81,31 @@ class MonetDataset(Dataset):
             imgs[k] = torch.tensor(img, dtype=torch.float32)
 
         return imgs
+
+
+def load_and_split_dataset(
+    monet_dir: str,
+    photo_dir: str,
+    img_size: int = 256,
+    norm_mean: tuple[int, ...] = (0.5, 0.5, 0.5),
+    norm_std: tuple[int, ...] = (0.5, 0.5, 0.5),
+    val_split: float = 0.1,
+    additional_targets: dict[str, str] = None,
+) -> tuple[Subset, Subset]:
+    transform = get_transforms(
+        img_size=img_size,
+        mean=norm_mean,
+        std=norm_std,
+        training=True,
+        additional_targets=additional_targets,
+    )
+
+    dataset = MonetDataset(
+        monet_dir=monet_dir, photo_dir=photo_dir, transform=transform
+    )
+
+    length = len(dataset)
+    n_val = int(length * val_split)
+    n_train = length - n_val
+
+    return random_split(dataset, lengths=[n_train, n_val])
