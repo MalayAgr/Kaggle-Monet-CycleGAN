@@ -95,7 +95,7 @@ class Trainer:
         self.backward_fn = self._make_backward_fn()
 
     def _forward(
-        self, img: torch.Tensor, monet: torch.Tensor
+        self, img: torch.Tensor, monet: torch.Tensor, scale: float = 10
     ) -> tuple[torch.Tensor, torch.Tensor]:
         outputs = self.cycle_gan(img, monet)
 
@@ -117,6 +117,7 @@ class Trainer:
             fake_monet_disc=outputs["fake_monet_disc"].detach(),
             cycled_monet=outputs["cycled_monet"],
             identity_monet=outputs["identity_monet"],
+            scale=scale,
         )
 
         return total_disc_loss, total_gen_loss
@@ -137,7 +138,9 @@ class Trainer:
 
         return with_amp if self.use_amp is True else no_amp
 
-    def _train_one_epoch(self, loader: DataLoader) -> tuple[float, float]:
+    def _train_one_epoch(
+        self, loader: DataLoader, scale: float = 10
+    ) -> tuple[float, float]:
         self.cycle_gan.train()
 
         p_loader = tqdm(loader, unit="batch", desc="Training")
@@ -154,7 +157,9 @@ class Trainer:
             monet = batch["monet_img"]
 
             with self.cm:
-                total_disc_loss, total_gen_loss = self._forward(img=img, monet=monet)
+                total_disc_loss, total_gen_loss = self._forward(
+                    img=img, monet=monet, scale=scale
+                )
 
                 average_disc += total_disc_loss
 
@@ -177,7 +182,9 @@ class Trainer:
 
         return average_gen, average_disc
 
-    def _validate_one_epoch(self, loader: DataLoader) -> tuple[float, float]:
+    def _validate_one_epoch(
+        self, loader: DataLoader, scale: float = 10
+    ) -> tuple[float, float]:
         self.cycle_gan.eval()
 
         p_loader = tqdm(loader, unit="batch", desc="Validating")
@@ -193,7 +200,9 @@ class Trainer:
             img = batch["image"]
             monet = batch["monet_img"]
 
-            total_disc_loss, total_gen_loss = self._forward(img=img, monet=monet)
+            total_disc_loss, total_gen_loss = self._forward(
+                img=img, monet=monet, scale=scale
+            )
 
             average_disc += total_disc_loss
 
@@ -209,7 +218,11 @@ class Trainer:
         return average_gen, average_disc
 
     def train(
-        self, train_loader: DataLoader, val_loader: DataLoader = None, epochs: int = 200
+        self,
+        train_loader: DataLoader,
+        val_loader: DataLoader = None,
+        epochs: int = 200,
+        scale: float = 10,
     ) -> tuple[CycleGAN, History]:
         history = History(
             metrics=["gen_loss", "disc_loss"], record_valid=val_loader is not None
@@ -219,7 +232,9 @@ class Trainer:
             print(f"Epoch {epoch + 1} / {epochs}:")
 
             # Train
-            gen_loss, disc_loss = self._train_one_epoch(loader=train_loader)
+            gen_loss, disc_loss = self._train_one_epoch(
+                loader=train_loader, scale=scale
+            )
 
             history.update(gen_loss, metric="gen_loss", dataset="train")
             history.update(disc_loss, metric="disc_loss", dataset="train")
@@ -229,7 +244,9 @@ class Trainer:
             if val_loader is not None:
                 # Turn off gradients and validate
                 with torch.no_grad():
-                    gen_loss, disc_loss = self._validate_one_epoch(loader=val_loader)
+                    gen_loss, disc_loss = self._validate_one_epoch(
+                        loader=val_loader, scale=scale
+                    )
 
                 history.update(gen_loss, metric="gen_loss", dataset="valid")
                 history.update(disc_loss, metric="disc_loss", dataset="valid")
