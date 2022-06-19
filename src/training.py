@@ -274,7 +274,7 @@ def get_optimizers(
 def get_schedulers(
     gen_opt: Optimizer, disc_opt: Optimizer
 ) -> tuple[_LRScheduler, _LRScheduler]:
-    lr_lambda = lambda epoch: 1 if epoch < 100 else 0.955 ^ (epoch % 100)
+    lr_lambda = lambda epoch: 1 if epoch < 100 else 0.955 ** (epoch % 100)
 
     gen_sch = LambdaLR(gen_opt, lr_lambda=lr_lambda)
 
